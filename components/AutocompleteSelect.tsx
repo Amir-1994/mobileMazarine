@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,16 +9,17 @@ import {
   Modal,
   Pressable,
   ActivityIndicator,
-} from 'react-native';
-import { ChevronDown, Search, X } from 'lucide-react-native';
+} from "react-native";
+import { ChevronDown, Search, X } from "lucide-react-native";
 
 interface AutocompleteSelectProps<T> {
-  data: T[];
+  data?: T[];
+  fetchData?: (term: string) => Promise<T[]>;
   value: T | null;
   onSelect: (item: T | null) => void;
   placeholder: string;
   displayKey: keyof T;
-  searchKeys: (keyof T)[];
+  searchKeys?: (keyof T)[];
   isLoading?: boolean;
   error?: string;
   renderItem?: (item: T) => React.ReactNode;
@@ -26,46 +27,89 @@ interface AutocompleteSelectProps<T> {
 
 export function AutocompleteSelect<T extends { id: string }>({
   data,
+  fetchData,
   value,
   onSelect,
   placeholder,
   displayKey,
   searchKeys,
-  isLoading = false,
+  isLoading: externalLoading = false,
   error,
   renderItem,
 }: AutocompleteSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fetchedData, setFetchedData] = useState<T[]>([]);
+  const [internalLoading, setInternalLoading] = useState(false);
+  const [internalError, setInternalError] = useState<string | null>(null);
+
+  const isLoading = externalLoading || internalLoading;
 
   const filteredData = useMemo(() => {
+    if (fetchData) {
+      return fetchedData;
+    }
+    if (!data) return [];
     if (!searchQuery.trim()) return data;
-    
-    return data.filter(item =>
-      searchKeys.some(key => {
+
+    if (!searchKeys) return data;
+    return data.filter((item) =>
+      searchKeys.some((key) => {
         const value = item[key];
-        if (typeof value !== 'string' || !value.trim()) return false;
+        if (typeof value !== "string" || !value.trim()) return false;
         return value.toLowerCase().includes(searchQuery.toLowerCase());
       })
     );
-  }, [data, searchQuery, searchKeys]);
+  }, [data, fetchedData, searchQuery, searchKeys, fetchData]);
+
+  const fetchDataCallback = useCallback(
+    async (term: string) => {
+      if (!fetchData) return;
+      setInternalLoading(true);
+      setInternalError(null);
+      try {
+        const result = await fetchData(term);
+        setFetchedData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setFetchedData([]);
+        setInternalError("Erreur lors du chargement des données");
+      } finally {
+        setInternalLoading(false);
+      }
+    },
+    [fetchData]
+  );
+
+  useEffect(() => {
+    if (fetchData && isOpen) {
+      const timeoutId = setTimeout(() => {
+        fetchDataCallback(searchQuery);
+      }, 500); // debounce
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchQuery, fetchData, isOpen, fetchDataCallback]);
+
+  useEffect(() => {
+    if (fetchData && isOpen && fetchedData.length === 0) {
+      fetchDataCallback("");
+    }
+  }, [isOpen, fetchData, fetchedData.length, fetchDataCallback]);
 
   const handleSelect = (item: T) => {
     onSelect(item);
     setIsOpen(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleClear = () => {
     onSelect(null);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const defaultRenderItem = (item: T) => (
     <View style={styles.defaultItemContainer}>
-      <Text style={styles.defaultItemText}>
-        {String(item[displayKey])}
-      </Text>
+      <Text style={styles.defaultItemText}>{String(item[displayKey])}</Text>
     </View>
   );
 
@@ -77,10 +121,7 @@ export function AutocompleteSelect<T extends { id: string }>({
         disabled={isLoading}
       >
         <View style={styles.selectorContent}>
-          <Text style={[
-            styles.selectorText,
-            !value && styles.placeholderText
-          ]}>
+          <Text style={[styles.selectorText, !value && styles.placeholderText]}>
             {value ? String(value[displayKey]) : placeholder}
           </Text>
           <View style={styles.selectorIcons}>
@@ -102,9 +143,7 @@ export function AutocompleteSelect<T extends { id: string }>({
         </View>
       </TouchableOpacity>
 
-      {error && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
       <Modal
         visible={isOpen}
@@ -142,7 +181,7 @@ export function AutocompleteSelect<T extends { id: string }>({
                 <TouchableOpacity
                   style={[
                     styles.item,
-                    value?.id === item.id && styles.selectedItem
+                    value?.id === item.id && styles.selectedItem,
                   ]}
                   onPress={() => handleSelect(item)}
                 >
@@ -154,7 +193,11 @@ export function AutocompleteSelect<T extends { id: string }>({
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
-                    {isLoading ? 'Chargement...' : 'Aucun résultat trouvé'}
+                    {internalError
+                      ? internalError
+                      : isLoading
+                      ? "Chargement..."
+                      : "Aucun résultat trouvé"}
                   </Text>
                 </View>
               }
@@ -171,86 +214,86 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   selector: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e1e5e9',
+    borderColor: "#e1e5e9",
     minHeight: 56,
-    justifyContent: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   selectorError: {
-    borderColor: '#ff4757',
+    borderColor: "#ff4757",
   },
   selectorContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   selectorText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   placeholderText: {
-    color: '#999',
+    color: "#999",
   },
   selectorIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   clearButton: {
     padding: 4,
   },
   errorText: {
-    color: '#ff4757',
+    color: "#ff4757",
     fontSize: 14,
     marginTop: 4,
     marginLeft: 4,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
     padding: 20,
   },
   modal: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
-    maxHeight: '80%',
-    shadowColor: '#000',
+    maxHeight: "80%",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 10,
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   closeButton: {
     padding: 4,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     margin: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     paddingHorizontal: 12,
   },
@@ -261,7 +304,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   list: {
     maxHeight: 300,
@@ -270,25 +313,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   selectedItem: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: "#e3f2fd",
   },
   defaultItemContainer: {
     flex: 1,
   },
   defaultItemText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   emptyContainer: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
-    textAlign: 'center',
+    color: "#999",
+    textAlign: "center",
   },
 });

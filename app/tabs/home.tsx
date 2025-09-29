@@ -85,15 +85,13 @@ export default function FormScreen() {
     }
   };
 
-  const assetsQuery = useQuery({
-    queryKey: ["assets"],
-    queryFn: apiService.getAssets,
-  });
+  const fetchAssets = async (term: string) => {
+    return await apiService.queryAssets(term);
+  };
 
-  const driversQuery = useQuery({
-    queryKey: ["drivers"],
-    queryFn: apiService.getDrivers,
-  });
+  const fetchDrivers = async (term: string) => {
+    return await apiService.queryDrivers(term);
+  };
 
   const bacsQuery = useQuery({
     queryKey: ["bacs"],
@@ -245,7 +243,9 @@ export default function FormScreen() {
         <UserIcon size={20} color="#50c878" />
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle}>{driver.name}</Text>
+        <Text style={styles.itemTitle}>
+          {driver?.firstName} {driver?.lastName}
+        </Text>
         {driver.email && (
           <Text style={styles.itemSubtitle}>{driver.email}</Text>
         )}
@@ -297,28 +297,22 @@ export default function FormScreen() {
         <View style={styles.form}>
           <FormField label="Véhicule" required>
             <AutocompleteSelect<Asset>
-              data={assetsQuery.data || []}
+              fetchData={fetchAssets}
               value={formData.selectedAsset}
               onSelect={updateAsset}
               placeholder="Sélectionner un véhicule"
               displayKey="name"
-              searchKeys={["name", "type", "licensePlate"]}
-              isLoading={assetsQuery.isLoading}
-              error={assetsQuery.error?.message}
               renderItem={renderAssetItem}
             />
           </FormField>
 
           <FormField label="Chauffeur" required>
             <AutocompleteSelect<Driver>
-              data={driversQuery.data || []}
+              fetchData={fetchDrivers}
               value={formData.selectedDriver}
               onSelect={updateDriver}
               placeholder="Sélectionner un chauffeur"
-              displayKey="name"
-              searchKeys={["name", "firstName", "lastName", "email"]}
-              isLoading={driversQuery.isLoading}
-              error={driversQuery.error?.message}
+              displayKey="firstName"
               renderItem={renderDriverItem}
             />
           </FormField>
@@ -602,7 +596,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 2,
+    margin: 2,
+    display: "flex",
+    flexDirection: "row",
+    gap: 4,
   },
   itemSubtitle: {
     fontSize: 14,

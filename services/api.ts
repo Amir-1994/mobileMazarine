@@ -53,6 +53,7 @@ export const apiService = {
         throw new Error("Login failed");
       }
       const data: LoginResponse = await response.json();
+      console.log("Login response data:", data);
       if (data.success) {
         await setAuthData(data.result);
       }
@@ -64,7 +65,6 @@ export const apiService = {
   },
 
   async logout(request: LogoutRequest): Promise<LogoutResponse> {
-    console.log("Logout function called"); // Debugging line
     try {
       const authData = await getAuthData();
       if (!authData) {
@@ -94,6 +94,7 @@ export const apiService = {
   async getAssets(): Promise<Asset[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/assets`);
+      console.log("Fetch assets response:", response);
       if (!response.ok) {
         throw new Error("Failed to fetch assets");
       }
@@ -130,7 +131,51 @@ export const apiService = {
     }
   },
 
+  async queryAssets(term?: string): Promise<Asset[]> {
+    const authData = await getAuthData();
+
+    if (!authData) {
+      throw new Error("No auth data found");
+    }
+
+    const body: any = {
+      query: {
+        _company_owner: authData.user._company_owner._id,
+      },
+      options: {
+        populate: [{ path: "_asset", select: "name" }],
+        sortBy: { from_dt: -1 },
+      },
+    };
+
+    // only add regex filter if term is provided
+    if (term && term.trim().length > 0) {
+      body.query.$or = [
+        { name: { $regex: term, $options: "i" } },
+        { licensePlate: { $regex: term, $options: "i" } },
+      ];
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/asset/query?limit=10&page=1`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Failed to query assets");
+    }
+    const data = await response.json();
+    return data.result || [];
+  },
+
   async getDrivers(): Promise<Driver[]> {
+    console.log("Fetching drivers from API...");
     try {
       const response = await fetch(`${API_BASE_URL}/drivers`);
       if (!response.ok) {
@@ -175,6 +220,60 @@ export const apiService = {
         },
       ];
     }
+  },
+
+  async queryDrivers(term?: string): Promise<Driver[]> {
+    console.log("Fetching drivers from API...");
+
+    const authData = await getAuthData();
+
+    if (!authData) {
+      throw new Error("No auth data found");
+    }
+
+    const body: any = {
+      query: {
+        _company_owner: authData.user._company_owner._id,
+      },
+      options: {
+        sortBy: { from_dt: -1 }, // adjust if backend expects "from_dt:desc"
+      },
+    };
+
+    // only add regex filter if term is provided
+    if (term && term.trim().length > 0) {
+      body.query.$or = [
+        { first_name: { $regex: term, $options: "i" } },
+        { last_name: { $regex: term, $options: "i" } },
+      ];
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/driver/query?limit=10&page=1`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to query drivers");
+    }
+
+    const data = await response.json();
+    const drivers = (data.result as any[]) || [];
+    return drivers.map((driver: any) => ({
+      id: driver._id || driver.id,
+      name: `${driver.first_name || ""} ${driver.last_name || ""}`.trim(),
+      firstName: driver.first_name,
+      lastName: driver.last_name,
+      email: driver.email,
+      phone: driver.phone,
+    })) as Driver[];
   },
 
   async getBacs(queryBody: Record<string, unknown>): Promise<Bac[]> {

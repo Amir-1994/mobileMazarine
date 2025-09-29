@@ -38,6 +38,10 @@ export interface User {
   login: string;
   role: string;
   creation_dt: string;
+  _company_owner: {
+    _id: string;
+    name?: string;
+  };
 }
 
 export interface LoginRequest {
