@@ -8,7 +8,10 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Modal,
+  Pressable,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { apiService, getAuthData } from "../services/api";
 import { LoginRequest } from "../types/api";
@@ -17,6 +20,9 @@ export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showServerModal, setShowServerModal] = useState(false);
+  const [serverLabel, setServerLabel] = useState("");
+  const [serverUrl, setServerUrl] = useState("");
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -44,6 +50,14 @@ export default function LoginForm() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => setShowServerModal(true)}
+        >
+          <Ionicons name="menu" size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
       <View style={styles.header}>
         <Image
           source={require("../assets/images/adaptive-favicon.png")}
@@ -92,6 +106,54 @@ export default function LoginForm() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        visible={showServerModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowServerModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowServerModal(false)}
+        >
+          <Pressable style={styles.serverModal} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Paramètres serveur</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={serverLabel}
+              onChangeText={setServerLabel}
+              placeholder="Label"
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.modalInput}
+              value={serverUrl}
+              onChangeText={setServerUrl}
+              placeholder="URL"
+              placeholderTextColor="#999"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowServerModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  // Save server settings
+                  Alert.alert("Succès", "Paramètres serveur sauvegardés");
+                  setShowServerModal(false);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Valider</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -161,6 +223,70 @@ const styles = StyleSheet.create({
   footerLink: {
     color: "#5D866C",
     fontSize: 14,
+    fontWeight: "600",
+  },
+  topBar: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+  },
+  menuButton: {
+    padding: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  serverModal: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalInput: {
+    backgroundColor: "#F5F5F0",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#C2A68C",
+    fontSize: 16,
+  },
+  modalButton: {
+    backgroundColor: "#5D866C",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  cancelButton: {
+    backgroundColor: "#C2A68C",
+  },
+  cancelButtonText: {
+    color: "#333",
+    fontSize: 16,
     fontWeight: "600",
   },
 });

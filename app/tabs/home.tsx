@@ -338,6 +338,19 @@ export default function FormScreen() {
             />
           </FormField>
 
+          <FormField label="Date et heure">
+            <TouchableOpacity
+              style={styles.dateInput}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.dateText}>
+                {formData.date
+                  ? formData.date.toLocaleString()
+                  : "Sélectionner une date et heure"}
+              </Text>
+            </TouchableOpacity>
+          </FormField>
+
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
@@ -566,6 +579,20 @@ export default function FormScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={formData.date || new Date()}
+          mode="datetime"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              updateDate(selectedDate);
+            }
+          }}
+        />
+      )}
     </View>
   );
 }
