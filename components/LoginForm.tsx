@@ -36,7 +36,7 @@ export default function LoginForm() {
       const credentials: LoginRequest = { login: username, password };
       const response = await apiService.login(credentials);
       if (response.success) {
-        router.push("/tabs/home");
+        router.push("/form-list");
       } else {
         Alert.alert("Error", "Login failed");
       }
@@ -55,7 +55,7 @@ export default function LoginForm() {
           style={styles.menuButton}
           onPress={() => setShowServerModal(true)}
         >
-          <Ionicons name="menu" size={24} color="#333" />
+          <Ionicons name="settings" size={30} color="#333" />
         </TouchableOpacity>
       </View>
       <View style={styles.header}>
