@@ -47,6 +47,8 @@ export default function FormScreen() {
   const [showLocationAlert, setShowLocationAlert] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
   const {
     formData,
@@ -66,6 +68,8 @@ export default function FormScreen() {
       const auth = await getAuthData();
       if (!auth) {
         router.replace("/");
+      } else {
+        setUser(auth.user);
       }
     };
     checkAuth();
@@ -203,6 +207,20 @@ export default function FormScreen() {
     resetForm();
   };
 
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    if (user) {
+      try {
+        await apiService.logout({ id: user._id });
+      } catch (error) {
+        console.error("Logout error:", error);
+        Alert.alert("Error", "Logout failed");
+      }
+      await removeAuthData();
+      router.replace("/");
+    }
+  };
+
   const renderAssetItem = (asset: Asset) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemIcon}>
@@ -248,6 +266,26 @@ export default function FormScreen() {
 
   return (
     <View style={styles.container}>
+      {user && (
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.userContainer}
+              onPress={() => setShowLogoutModal(true)}
+            >
+              <Text style={styles.username}>{user.first_name}</Text>
+              <Ionicons name="person-circle-outline" size={40} color="#000" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+      <Text style={styles.pageTitle}>Remplir le formulaire</Text>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <FormField label="Véhicule" required>
@@ -297,14 +335,6 @@ export default function FormScreen() {
               onChangeText={updateDescription}
               placeholder="Décrivez la mission, les détails importants..."
               maxLength={500}
-            />
-          </FormField>
-
-          <FormField label="Géolocalisation" required>
-            <LocationPicker
-              value={formData.location}
-              onLocationSelect={updateLocation}
-              placeholder="Obtenir votre position actuelle"
             />
           </FormField>
 
@@ -478,6 +508,64 @@ export default function FormScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowLogoutModal(false)}
+        >
+          <Pressable
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 12,
+              padding: 20,
+              width: "80%",
+              maxWidth: 300,
+            }}
+            onPress={() => {}}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "600",
+                textAlign: "center",
+                marginBottom: 20,
+              }}
+            >
+              Se déconnecter
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#ff4757",
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                borderRadius: 8,
+                alignItems: "center",
+              }}
+              onPress={handleLogout}
+            >
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+                Déconnexion
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                marginTop: 12,
+                paddingVertical: 12,
+                alignItems: "center",
+              }}
+              onPress={() => setShowLogoutModal(false)}
+            >
+              <Text style={{ color: "#666", fontSize: 16 }}>Annuler</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -489,7 +577,10 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 30,
+    paddingVertical: 20,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e1e5e9",
   },
   headerTitle: {
     fontSize: 28,
@@ -728,6 +819,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  backButton: {
+    padding: 8,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#5D866C",
+    textAlign: "center",
+    marginVertical: 20,
+    marginHorizontal: 20,
   },
   headerLeft: {
     flex: 1,
