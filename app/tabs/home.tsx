@@ -46,8 +46,6 @@ export default function FormScreen() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLocationAlert, setShowLocationAlert] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const router = useRouter();
   const {
@@ -66,29 +64,12 @@ export default function FormScreen() {
   useEffect(() => {
     const checkAuth = async () => {
       const auth = await getAuthData();
-      if (auth) {
-        setUser(auth.user);
-      } else {
+      if (!auth) {
         router.replace("/");
       }
     };
     checkAuth();
   }, [router]);
-
-  const handleLogout = async () => {
-    setShowMenu(false);
-    if (user) {
-      try {
-        await apiService.logout({ id: user._id });
-      } catch (error) {
-        console.error("Logout error:", error);
-        Alert.alert("Error", "Logout failed");
-      }
-      await removeAuthData();
-      setUser(null);
-      router.replace("/");
-    }
-  };
 
   const fetchAssets = async (term: string) => {
     return await apiService.queryAssets(term);
@@ -266,29 +247,7 @@ export default function FormScreen() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient colors={["#F5F5F0", "#E6D8C3"]} style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>Formulaire de Mission</Text>
-            <Text style={styles.headerSubtitle}>
-              Sélectionnez un véhicule, un chauffeur et un bac
-            </Text>
-          </View>
-          <View style={styles.headerRight}>
-            {user && (
-              <TouchableOpacity
-                style={styles.userContainer}
-                onPress={() => setShowMenu(true)}
-              >
-                <Ionicons name="person-circle-outline" size={40} color="#fff" />
-                <Text style={styles.username}>{user.first_name}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </LinearGradient>
-
+    <View style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <FormField label="Véhicule" required>
@@ -518,25 +477,6 @@ export default function FormScreen() {
             </View>
           </View>
         </Pressable>
-      </Modal>
-
-      <Modal
-        visible={showMenu}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowMenu(false)}
-      >
-        <TouchableOpacity
-          style={styles.menuOverlay}
-          onPress={() => setShowMenu(false)}
-        >
-          <View style={styles.menu}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#333" />
-              <Text style={styles.menuText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
       </Modal>
     </View>
   );
