@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 interface FormFieldProps {
   label: string;
@@ -7,7 +7,11 @@ interface FormFieldProps {
   children: React.ReactNode;
 }
 
-export function FormField({ label, required = false, children }: FormFieldProps) {
+export function FormField({
+  label,
+  required = false,
+  children,
+}: FormFieldProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>
@@ -25,11 +29,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   required: {
-    color: '#ff4757',
+    color: "#ff4757",
   },
 });

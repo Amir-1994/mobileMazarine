@@ -3,7 +3,7 @@ import { Asset, Driver, Bac, FormData, Location } from "@/types/api";
 import { useState } from "react";
 
 export const useFormStore = () => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date();
   const [formData, setFormData] = useState<FormData>({
     selectedAsset: null,
     selectedDriver: null,
@@ -38,7 +38,7 @@ export const useFormStore = () => {
     setFormData((prev) => ({ ...prev, location }));
   };
 
-  const updateDate = (date: string) => {
+  const updateDate = (date: Date) => {
     setFormData((prev) => ({ ...prev, date }));
   };
 
@@ -59,8 +59,7 @@ export const useFormStore = () => {
       formData.selectedAsset &&
       formData.selectedDriver &&
       formData.selectedBac &&
-      formData.description.trim().length > 0 &&
-      formData.location
+      formData.description.trim().length > 0
     );
   };
 

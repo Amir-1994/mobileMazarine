@@ -301,10 +301,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   searchInput: {
+    outlineWidth: 0,
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
     color: "#333",
+    borderRadius: 5,
   },
   list: {
     maxHeight: 300,

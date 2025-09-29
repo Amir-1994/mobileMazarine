@@ -90,14 +90,6 @@ export default function FormScreen() {
     }
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      const dateString = selectedDate.toISOString().split("T")[0];
-      updateDate(dateString);
-    }
-  };
-
   const fetchAssets = async (term: string) => {
     return await apiService.queryAssets(term);
   };
@@ -233,7 +225,7 @@ export default function FormScreen() {
   const renderAssetItem = (asset: Asset) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemIcon}>
-        <Truck size={20} color="#4a90e2" />
+        <Truck size={20} color="#5D866C" />
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemTitle}>{asset.name}</Text>
@@ -248,7 +240,7 @@ export default function FormScreen() {
   const renderDriverItem = (driver: Driver) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemIcon}>
-        <UserIcon size={20} color="#50c878" />
+        <UserIcon size={20} color="#5D866C" />
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemTitle}>
@@ -265,7 +257,7 @@ export default function FormScreen() {
   const renderBacItem = (bac: Bac) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemIcon}>
-        <Package size={20} color="#ff6b6b" />
+        <Package size={20} color="#5D866C" />
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemTitle}>{bac.name}</Text>
@@ -275,7 +267,7 @@ export default function FormScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
+      <LinearGradient colors={["#F5F5F0", "#E6D8C3"]} style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Formulaire de Mission</Text>
@@ -332,15 +324,6 @@ export default function FormScreen() {
             />
           </FormField>
 
-          <FormField label="Date">
-            <TouchableOpacity
-              style={styles.dateInput}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={styles.dateText}>{formData.date}</Text>
-            </TouchableOpacity>
-          </FormField>
-
           <FormField label="Photo">
             <PhotoPicker
               value={formData.photo}
@@ -393,8 +376,8 @@ export default function FormScreen() {
                   formData.selectedBac &&
                   formData.description &&
                   !isGettingLocation
-                    ? ["#4CAF50", "#45a049"]
-                    : ["#ccc", "#999"]
+                    ? ["#5D866C", "#4a6b58"]
+                    : ["#C2A68C", "#a89078"]
                 }
                 style={styles.submitButtonGradient}
               >
@@ -555,15 +538,6 @@ export default function FormScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={new Date(formData.date)}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-        />
-      )}
     </View>
   );
 }
@@ -571,7 +545,7 @@ export default function FormScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#F5F5F0",
   },
   header: {
     paddingHorizontal: 20,
@@ -580,12 +554,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#333",
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: "#666",
   },
   content: {
     flex: 1,
@@ -603,7 +577,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    backgroundColor: "rgba(93, 134, 108, 0.1)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -832,7 +806,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   username: {
-    color: "#fff",
+    color: "#333",
     fontSize: 16,
     fontWeight: "600",
   },
