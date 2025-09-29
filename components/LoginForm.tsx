@@ -244,7 +244,7 @@ export default function LoginForm() {
 
                 {/* Sign Up Link */}
                 <View style={styles.signupContainer}>
-                  <Text style={styles.signupText}>Don't have an account? </Text>
+                  <Text style={styles.signupText}>Dont have an account? </Text>
                   <TouchableOpacity>
                     <Text style={styles.signupLink}>Sign Up</Text>
                   </TouchableOpacity>

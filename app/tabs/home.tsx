@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -28,6 +29,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as ExpoLocation from "expo-location";
+import * as ImagePicker from "expo-image-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { AutocompleteSelect } from "@/components/AutocompleteSelect";
 import { FormField } from "@/components/FormField";
@@ -45,6 +48,7 @@ export default function FormScreen() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const router = useRouter();
   const {
     formData,
@@ -54,6 +58,7 @@ export default function FormScreen() {
     updatePhoto,
     updateDescription,
     updateLocation,
+    updateDate,
     resetForm,
     isFormValid,
   } = useFormStore();
@@ -82,6 +87,14 @@ export default function FormScreen() {
       await removeAuthData();
       setUser(null);
       router.replace("/");
+    }
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const dateString = selectedDate.toISOString().split("T")[0];
+      updateDate(dateString);
     }
   };
 
@@ -194,27 +207,23 @@ export default function FormScreen() {
       return;
     }
 
-    // Si pas de géolocalisation, essayer de l'obtenir en arrière-plan
-    if (!formData.location) {
-      setIsGettingLocation(true);
+    // Toujours essayer d'obtenir la géolocalisation
+    setIsGettingLocation(true);
 
-      const location = await getCurrentLocationBackground();
+    const location = await getCurrentLocationBackground();
 
-      if (location) {
-        // Géolocalisation obtenue avec succès
-        updateLocation(location);
-        setIsGettingLocation(false);
-        setShowSuccessModal(true);
-      } else {
-        // Impossible d'obtenir la géolocalisation
-        setIsGettingLocation(false);
-        setShowLocationAlert(true);
-      }
-      return;
+    if (location) {
+      // Géolocalisation obtenue avec succès
+      updateLocation(location);
+      console.log("Location obtained:", location);
+      setIsGettingLocation(false);
+      setShowSuccessModal(true);
+    } else {
+      // Impossible d'obtenir la géolocalisation
+      console.log("Failed to obtain location");
+      setIsGettingLocation(false);
+      setShowLocationAlert(true);
     }
-
-    // Tout est OK, soumettre le formulaire
-    setShowSuccessModal(true);
   };
 
   const handleModalClose = () => {
@@ -281,15 +290,17 @@ export default function FormScreen() {
               Sélectionnez un véhicule, un chauffeur et un bac
             </Text>
           </View>
-          {user && (
-            <TouchableOpacity
-              style={styles.userContainer}
-              onPress={() => setShowMenu(true)}
-            >
-              <Ionicons name="person-circle-outline" size={40} color="#fff" />
-              <Text style={styles.username}>{user.first_name}</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerRight}>
+            {user && (
+              <TouchableOpacity
+                style={styles.userContainer}
+                onPress={() => setShowMenu(true)}
+              >
+                <Ionicons name="person-circle-outline" size={40} color="#fff" />
+                <Text style={styles.username}>{user.first_name}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </LinearGradient>
 
@@ -329,6 +340,15 @@ export default function FormScreen() {
               error={bacsQuery.error?.message}
               renderItem={renderBacItem}
             />
+          </FormField>
+
+          <FormField label="Date">
+            <TouchableOpacity
+              style={styles.dateInput}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.dateText}>{formData.date}</Text>
+            </TouchableOpacity>
           </FormField>
 
           <FormField label="Photo">
@@ -545,6 +565,15 @@ export default function FormScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={new Date(formData.date)}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
     </View>
   );
 }
@@ -799,6 +828,14 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  cameraButton: {
+    padding: 8,
+  },
   userContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -830,6 +867,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   menuText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: "#e1e5e9",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+  },
+  dateText: {
     fontSize: 16,
     color: "#333",
   },

@@ -77,4 +77,5 @@ export interface FormData {
   photo: string | null;
   description: string;
   location: Location | null;
+  date: string;
 }
