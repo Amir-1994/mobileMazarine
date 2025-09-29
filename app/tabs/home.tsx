@@ -106,10 +106,9 @@ export default function FormScreen() {
     return await apiService.queryDrivers(term);
   };
 
-  const bacsQuery = useQuery({
-    queryKey: ["bacs"],
-    queryFn: () => apiService.getBacs({}),
-  });
+  const fetchBacs = async (term: string) => {
+    return await apiService.queryBacs(term);
+  };
 
   const requestLocationPermission = async () => {
     try {
@@ -270,12 +269,6 @@ export default function FormScreen() {
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemTitle}>{bac.name}</Text>
-        {bac.location && (
-          <Text style={styles.itemSubtitle}>{bac.location}</Text>
-        )}
-        {bac.capacity && (
-          <Text style={styles.itemType}>Capacité: {bac.capacity}</Text>
-        )}
       </View>
     </View>
   );
@@ -330,14 +323,11 @@ export default function FormScreen() {
 
           <FormField label="Bac" required>
             <AutocompleteSelect<Bac>
-              data={bacsQuery.data || []}
+              fetchData={fetchBacs}
               value={formData.selectedBac}
               onSelect={updateBac}
               placeholder="Sélectionner un bac"
               displayKey="name"
-              searchKeys={["name", "location", "type"]}
-              isLoading={bacsQuery.isLoading}
-              error={bacsQuery.error?.message}
               renderItem={renderBacItem}
             />
           </FormField>

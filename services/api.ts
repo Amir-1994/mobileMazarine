@@ -276,56 +276,54 @@ export const apiService = {
     })) as Driver[];
   },
 
-  async getBacs(queryBody: Record<string, unknown>): Promise<Bac[]> {
-    try {
-      if (!queryBody || typeof queryBody !== "object") {
-        throw new Error("Invalid query body");
-      }
+  async queryBacs(term?: string): Promise<Bac[]> {
+    const authData = await getAuthData();
 
-      const response = await fetch(`${API_BASE_URL}/geodata/query`, {
+    if (!authData) {
+      throw new Error("No auth data found");
+    }
+
+    const body: any = {
+      query: {
+        _company_owner: authData.user._company_owner._id,
+        "geometry.type": "Point",
+      },
+      options: {
+        sortBy: { creation_dt: -1 },
+      },
+    };
+
+    // only add regex filter if term is provided
+    if (term && term.trim().length > 0) {
+      body.query["properties.Nom"] = { $regex: term, $options: "i" };
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/geodata/query?limit=10&page=1`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
         },
-        body: JSON.stringify(queryBody),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch bacs");
+        body: JSON.stringify(body),
       }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching bacs:", error);
-      // Return mock data for development
-      return [
-        {
-          id: "1",
-          name: "Bac Nord Paris",
-          location: "Paris Nord",
-          capacity: 1000,
-          type: "Standard",
-        },
-        {
-          id: "2",
-          name: "Bac Sud Lyon",
-          location: "Lyon Sud",
-          capacity: 1500,
-          type: "Large",
-        },
-        {
-          id: "3",
-          name: "Bac Est Marseille",
-          location: "Marseille Est",
-          capacity: 800,
-          type: "Compact",
-        },
-        {
-          id: "4",
-          name: "Bac Ouest Toulouse",
-          location: "Toulouse Ouest",
-          capacity: 1200,
-          type: "Standard",
-        },
-      ];
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to query bacs");
     }
+
+    const data = await response.json();
+    console.log("Fetch bacs response:00001", data.result);
+
+    const bacs = (data.result as any[]) || [];
+    return bacs.map((bac: any) => ({
+      id: bac._id,
+      name: bac.properties?.Nom || "Unnamed",
+      location: bac.properties?.Description || "",
+      capacity: bac.properties?.capacity || 0,
+      type: bac.category || "Point",
+    })) as Bac[];
   },
 };
