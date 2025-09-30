@@ -1,0 +1,21 @@
+diff --git a/node_modules/@react-native-community/datetimepicker/src/DateTimePickerAndroid.android.js b/node_modules/@react-native-community/datetimepicker/src/DateTimePickerAndroid.android.js
+index 51d657f..d9b136e 100644
+--- a/node_modules/@react-native-community/datetimepicker/src/DateTimePickerAndroid.android.js
++++ b/node_modules/@react-native-community/datetimepicker/src/DateTimePickerAndroid.android.js
+@@ -28,1 +28,1 @@
+-function open(props: AndroidNativeProps) {
++function open(props) {
+@@ -129,8 +129,9 @@ function dismiss(
+-  mode: AndroidNativeProps['mode'],
+-  design?: AndroidNativeProps['design'] = 'default',
++  mode,
++  design = 'default',
+ ): Promise<boolean> {
+   const pickers = design === 'material' ? materialPickers : defaultPickers;
++  const pickerKey = mode === ANDROID_MODE.time ? ANDROID_MODE.time : ANDROID_MODE.date;
+   // $FlowFixMe - `AbstractComponent` [1] is not an instance type.
+-  return pickers[mode].dismiss();
++  return pickers[pickerKey].dismiss();
+ }
+ 
+ export const DateTimePickerAndroid = {open, dismiss};

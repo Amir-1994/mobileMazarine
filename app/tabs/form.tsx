@@ -691,7 +691,7 @@ export default function FormScreen() {
           display="default"
           onChange={(event, selectedDate) => {
             setShowDatePicker(false);
-            if (selectedDate) {
+            if (event.type === "set" && selectedDate) {
               updateDate(selectedDate);
             }
           }}
