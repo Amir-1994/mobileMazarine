@@ -10,8 +10,9 @@ import {
   AuthData,
 } from "@/types/api";
 
-const API_BASE_URL = "http://localhost:8000/api/v1.0";
+//const API_BASE_URL = "http://localhost:8000/api/v1.0";
 
+const API_BASE_URL = "https://demo.ngi-gps.com/apimobile/v1.0";
 // Helper functions for token management
 export const setAuthData = async (authData: AuthData): Promise<void> => {
   try {

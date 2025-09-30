@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,8 +13,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiService, getAuthData } from "../services/api";
-import { LoginRequest } from "../types/api";
+import { LoginRequest, User } from "../types/api";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
@@ -24,6 +25,27 @@ export default function LoginForm() {
   const [serverLabel, setServerLabel] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const router = useRouter();
+
+  const [language, setLanguage] = useState("en");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [loggedUsers, setLoggedUsers] = useState<
+    { user: User; password: string }[]
+  >([]);
+
+  useEffect(() => {
+    const loadLoggedUsers = async () => {
+      try {
+        const users = await AsyncStorage.getItem("loggedUsers");
+        if (users) {
+          setLoggedUsers(JSON.parse(users));
+        }
+      } catch (error) {
+        console.error("Error loading logged users:", error);
+      }
+    };
+    loadLoggedUsers();
+  }, []);
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -36,6 +58,13 @@ export default function LoginForm() {
       const credentials: LoginRequest = { login: username, password };
       const response = await apiService.login(credentials);
       if (response.success) {
+        const user = response.result.user;
+        const userExists = loggedUsers.some((u) => u.user._id === user._id);
+        if (!userExists) {
+          const updatedUsers = [...loggedUsers, { user, password }];
+          setLoggedUsers(updatedUsers);
+          AsyncStorage.setItem("loggedUsers", JSON.stringify(updatedUsers));
+        }
         router.push("/form-list");
       } else {
         Alert.alert("Error", "Login failed");
@@ -68,6 +97,21 @@ export default function LoginForm() {
       </View>
 
       <View style={styles.form}>
+        <View style={styles.dropdownContainer}>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => setShowBottomSheet(true)}
+          >
+            <Text style={styles.dropdownText}>
+              {selectedUser
+                ? `${selectedUser.first_name || selectedUser.login} ${
+                    selectedUser.last_name || ""
+                  }`.trim()
+                : "Select User"}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#333" />
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={styles.input}
           value={username}
@@ -87,6 +131,21 @@ export default function LoginForm() {
           onSubmitEditing={handleLogin}
         />
 
+        <View style={styles.flagsContainer}>
+          <TouchableOpacity
+            style={[styles.flag, language === "fr" && styles.flagSelected]}
+            onPress={() => setLanguage("fr")}
+          >
+            <Text style={styles.flagText}>🇫🇷</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.flag, language === "en" && styles.flagSelected]}
+            onPress={() => setLanguage("en")}
+          >
+            <Text style={styles.flagText}>🇬🇧</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleLogin}
@@ -98,13 +157,6 @@ export default function LoginForm() {
             <Text style={styles.buttonText}>Sign In</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Dont have an account? </Text>
-          <TouchableOpacity>
-            <Text style={styles.footerLink}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       <Modal
@@ -152,6 +204,53 @@ export default function LoginForm() {
               </TouchableOpacity>
             </View>
           </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showBottomSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBottomSheet(false)}
+      >
+        <Pressable
+          style={styles.bottomSheetOverlay}
+          onPress={() => setShowBottomSheet(false)}
+        >
+          <View style={styles.bottomSheetHeader}>
+            <Text style={styles.bottomSheetTitle}>Logged In Users</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowBottomSheet(false)}
+            >
+              <Ionicons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          {loggedUsers.filter((item) => item.user && item.user.login).length >
+          0 ? (
+            loggedUsers
+              .filter((item) => item.user && item.user.login)
+              .map((item) => (
+                <TouchableOpacity
+                  key={item.user._id}
+                  style={styles.bottomSheetItem}
+                  onPress={() => {
+                    setSelectedUser(item.user);
+                    setUsername(item.user.login);
+                    setPassword(item.password);
+                    setShowBottomSheet(false);
+                  }}
+                >
+                  <Text style={styles.bottomSheetItemText}>
+                    {`${item.user.first_name || item.user.login} ${
+                      item.user.last_name || ""
+                    }`.trim()}
+                  </Text>
+                </TouchableOpacity>
+              ))
+          ) : (
+            <Text style={styles.bottomSheetItemText}>No logged in users</Text>
+          )}
         </Pressable>
       </Modal>
     </View>
@@ -288,5 +387,86 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 16,
     fontWeight: "600",
+  },
+  dropdownContainer: {
+    marginBottom: 16,
+  },
+  dropdown: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#C2A68C",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  flagsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 16,
+    gap: 16,
+  },
+  flag: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#C2A68C",
+    backgroundColor: "#fff",
+  },
+  flagSelected: {
+    backgroundColor: "#5D866C",
+  },
+  flagText: {
+    fontSize: 24,
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  bottomSheetHeader: {
+    backgroundColor: "#5D866C",
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#fff",
+    textAlign: "center",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  bottomSheet: {
+    backgroundColor: "#F5F5F0",
+    padding: 20,
+    maxHeight: "50%",
+  },
+  bottomSheetItem: {
+    backgroundColor: "#fff",
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#C2A68C",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  bottomSheetItemText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
   },
 });
