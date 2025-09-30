@@ -10,6 +10,7 @@ import {
   Image,
   Modal,
   Pressable,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -217,40 +218,42 @@ export default function LoginForm() {
           style={styles.bottomSheetOverlay}
           onPress={() => setShowBottomSheet(false)}
         >
-          <View style={styles.bottomSheetHeader}>
-            <Text style={styles.bottomSheetTitle}>Logged In Users</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowBottomSheet(false)}
-            >
-              <Ionicons name="close" size={24} color="#fff" />
-            </TouchableOpacity>
+          <View style={styles.bottomSheet}>
+            {loggedUsers.filter((item) => item.user && item.user.login).length >
+            0 ? (
+              loggedUsers
+                .filter((item) => item.user && item.user.login)
+                .map((item) => (
+                  <TouchableOpacity
+                    key={item.user._id}
+                    style={styles.bottomSheetItem}
+                    onPress={() => {
+                      setSelectedUser(item.user);
+                      setUsername(item.user.login);
+                      setPassword(item.password);
+                      setShowBottomSheet(false);
+                    }}
+                  >
+                    <View style={styles.bottomSheetItemContent}>
+                      <View style={styles.userAvatar}>
+                        <Text style={styles.userAvatarText}>
+                          {(item.user.first_name || item.user.login)
+                            .charAt(0)
+                            .toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text style={styles.bottomSheetItemText}>
+                        {`${item.user.first_name || item.user.login} ${
+                          item.user.last_name || ""
+                        }`.trim()}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+            ) : (
+              <Text style={styles.bottomSheetItemText}>No logged in users</Text>
+            )}
           </View>
-          {loggedUsers.filter((item) => item.user && item.user.login).length >
-          0 ? (
-            loggedUsers
-              .filter((item) => item.user && item.user.login)
-              .map((item) => (
-                <TouchableOpacity
-                  key={item.user._id}
-                  style={styles.bottomSheetItem}
-                  onPress={() => {
-                    setSelectedUser(item.user);
-                    setUsername(item.user.login);
-                    setPassword(item.password);
-                    setShowBottomSheet(false);
-                  }}
-                >
-                  <Text style={styles.bottomSheetItemText}>
-                    {`${item.user.first_name || item.user.login} ${
-                      item.user.last_name || ""
-                    }`.trim()}
-                  </Text>
-                </TouchableOpacity>
-              ))
-          ) : (
-            <Text style={styles.bottomSheetItemText}>No logged in users</Text>
-          )}
         </Pressable>
       </Modal>
     </View>
@@ -447,22 +450,33 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   bottomSheet: {
-    backgroundColor: "#F5F5F0",
+    backgroundColor: "#fff",
     padding: 20,
     maxHeight: "50%",
+    minHeight: Dimensions.get("window").height / 4,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   bottomSheetItem: {
-    backgroundColor: "#fff",
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#C2A68C",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingVertical: 12,
+  },
+  bottomSheetItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  userAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#5D866C",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userAvatarText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   bottomSheetItemText: {
     fontSize: 16,
