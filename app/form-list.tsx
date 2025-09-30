@@ -13,8 +13,8 @@ import {
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuthData, removeAuthData, apiService } from "../services/api";
-import { User } from "../types/api";
+import { getAuthData, removeAuthData, apiService } from "@/services/api";
+import { User } from "@/types/api";
 
 interface FormItem {
   id: string;
@@ -26,8 +26,6 @@ interface FormItem {
 export default function FormListScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
   const router = useRouter();
 
   const {
@@ -35,8 +33,8 @@ export default function FormListScreen() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["forms", page, limit],
-    queryFn: () => apiService.queryForms(limit, page),
+    queryKey: ["forms"],
+    queryFn: () => apiService.queryForms(10, 1),
   });
 
   const formItems: FormItem[] = (forms as any[]).map((form: any) => ({
@@ -75,7 +73,7 @@ export default function FormListScreen() {
   const renderItem = ({ item }: { item: FormItem }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push("/tabs/home")}
+      onPress={() => router.push("/home" as any)}
     >
       <View style={styles.cardContent}>
         <View style={styles.iconContainer}>
@@ -95,12 +93,6 @@ export default function FormListScreen() {
       {user && (
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
             <TouchableOpacity
               style={styles.userContainer}
               onPress={() => setShowLogoutModal(true)}
@@ -211,7 +203,7 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "center",
   },
   backButton: {

@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 interface Slide {
   id: string;
@@ -44,7 +44,7 @@ const slides: Slide[] = [
     id: "4",
     title: "Commencez maintenant",
     subtitle: "Connectez-vous pour accéder à toutes les fonctionnalités",
-    image: require("../assets/images/adaptive-favicon.png"),
+    image: require("../assets/images/favicon.png"),
   },
 ];
 

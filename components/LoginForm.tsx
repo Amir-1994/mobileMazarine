@@ -15,7 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiService, getAuthData } from "../services/api";
+import { apiService } from "../services/api";
 import { LoginRequest, User } from "../types/api";
 
 export default function LoginForm() {
@@ -66,7 +66,7 @@ export default function LoginForm() {
           setLoggedUsers(updatedUsers);
           AsyncStorage.setItem("loggedUsers", JSON.stringify(updatedUsers));
         }
-        router.push("/form-list");
+        router.push("/tabs/home" as any);
       } else {
         Alert.alert("Error", "Login failed");
       }
@@ -90,7 +90,7 @@ export default function LoginForm() {
       </View>
       <View style={styles.header}>
         <Image
-          source={require("../assets/images/adaptive-favicon.png")}
+          source={require("../assets/images/adaptive-icon.png")}
           style={styles.logo}
         />
         <Text style={styles.title}>Welcome Back</Text>

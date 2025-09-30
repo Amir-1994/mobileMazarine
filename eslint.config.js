@@ -13,5 +13,8 @@ module.exports = defineConfig([
         },
       },
     },
+    rules: {
+      "import/no-unresolved": "error",
+    },
   },
 ]);

@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Modal,
-  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   Server,
@@ -20,8 +17,7 @@ import {
   HelpCircle,
   ExternalLink,
 } from "lucide-react-native";
-import { getAuthData, removeAuthData, apiService } from "@/services/api";
-import { User } from "@/types/api";
+import { getAuthData } from "@/services/api";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -58,36 +54,17 @@ export default function SettingsScreen() {
     },
   ];
 
-  const [user, setUser] = useState<User | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const checkAuth = async () => {
       const auth = await getAuthData();
-      if (auth) {
-        setUser(auth.user);
-      } else {
+      if (!auth) {
         router.replace("/");
       }
     };
     checkAuth();
   }, [router]);
-
-  const handleLogout = async () => {
-    setShowMenu(false);
-    if (user) {
-      try {
-        await apiService.logout({ id: user._id });
-      } catch (error) {
-        console.error("Logout error:", error);
-        Alert.alert("Error", "Logout failed");
-      }
-      await removeAuthData();
-      setUser(null);
-      router.push("/");
-    }
-  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
