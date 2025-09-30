@@ -40,6 +40,7 @@ import { LocationPicker } from "@/components/LocationPicker";
 import { useFormStore } from "@/hooks/useFormStore";
 import { apiService, getAuthData, removeAuthData } from "@/services/api";
 import { Asset, Driver, Bac, Location, User } from "@/types/api";
+import { useLocalSearchParams, useGlobalSearchParams, Link } from "expo-router";
 
 export default function FormScreen() {
   const insets = useSafeAreaInsets();
@@ -52,6 +53,8 @@ export default function FormScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
+  const { title, description, id } = useLocalSearchParams();
+
   const {
     formData,
     updateAsset,
@@ -213,14 +216,38 @@ export default function FormScreen() {
     setIsSaving(true);
     try {
       const dataToSave = {
-        _form_id: "ddddddddd",
-        asset: formData.selectedAsset?.id,
-        driver: formData.selectedDriver?.id,
-        bac: formData.selectedBac?.id,
-        photo: formData.photo,
-        description: formData.description,
-        location: formData.location,
-        date: formData.date,
+        _form_id: id,
+        READ_ONLY: false,
+        data: {
+          description: formData.description,
+          photo: {
+            photo: formData.photo,
+          },
+          asset: {
+            name: formData.selectedAsset?.name,
+            _id: formData.selectedAsset?.id,
+            //brand : formData.selectedAsset?.brand,
+          },
+          driver: {
+            first_name: formData.selectedDriver?.firstName,
+            last_name: formData.selectedDriver?.lastName,
+            _id: formData.selectedDriver?.id,
+          },
+          bac: {
+            name: formData.selectedBac?.name || "",
+
+            _id: formData.selectedBac?.id,
+          },
+          loc: {
+            type: "Point",
+            coordinates: [
+              formData.location?.longitude || 0,
+              formData.location?.latitude || 0,
+            ],
+          },
+          date: formData.date,
+        },
+        _company_owner: user?._company_owner?._id || user?._company_owner,
         user: user?._id,
       };
       await apiService.saveFormData(dataToSave);
@@ -316,7 +343,7 @@ export default function FormScreen() {
           </View>
         </View>
       )}
-      <Text style={styles.pageTitle}>Remplir le formulaire</Text>
+      <Text style={styles.pageTitle}>{title}</Text>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <FormField label="Véhicule" required>

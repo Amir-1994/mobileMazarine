@@ -70,10 +70,20 @@ export default function FormListScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: FormItem }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push("/tabs/form" as any)}
+      onPress={() => {
+        console.log("000001", item);
+        router.push({
+          pathname: "/tabs/form",
+          params: {
+            title: item.title,
+            description: item.description,
+            id: item.id,
+          },
+        });
+      }}
     >
       <View style={styles.cardContent}>
         <View style={styles.iconContainer}>
