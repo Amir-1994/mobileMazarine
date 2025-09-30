@@ -327,4 +327,63 @@ export const apiService = {
       type: bac.category || "Point",
     })) as Bac[];
   },
+
+  async saveFormData(formData: any): Promise<any> {
+    const authData = await getAuthData();
+
+    if (!authData) {
+      throw new Error("No auth data found");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/form_data/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authData.token}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to save form data");
+    }
+
+    return await response.json();
+  },
+
+  async queryForms(limit: number = 10, page: number = 1): Promise<any[]> {
+    const authData = await getAuthData();
+
+    if (!authData) {
+      throw new Error("No auth data found");
+    }
+
+    const body: any = {
+      query: {
+        //_company_owner: authData.user._company_owner._id,
+      },
+      options: {
+        sortBy: { createdAt: -1 },
+      },
+    };
+
+    const response = await fetch(
+      `${API_BASE_URL}/form/query?limit=${limit}&page=${page}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to query forms");
+    }
+
+    const data = await response.json();
+    return data.result || [];
+  },
 };

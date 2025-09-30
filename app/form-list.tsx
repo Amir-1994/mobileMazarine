@@ -8,8 +8,10 @@ import {
   Modal,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuthData, removeAuthData, apiService } from "../services/api";
 import { User } from "../types/api";
@@ -21,44 +23,28 @@ interface FormItem {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-const formItems: FormItem[] = [
-  {
-    id: "1",
-    title: "Mission de livraison",
-    description:
-      "Formulaire pour enregistrer une mission de livraison avec chauffeur et véhicule.",
-    icon: "car",
-  },
-  {
-    id: "2",
-    title: "Maintenance véhicule",
-    description: "Rapport de maintenance pour les véhicules de la flotte.",
-    icon: "build",
-  },
-  {
-    id: "3",
-    title: "Contrôle qualité",
-    description: "Évaluation de la qualité des services et équipements.",
-    icon: "checkmark-circle",
-  },
-  {
-    id: "4",
-    title: "Incident routier",
-    description: "Signalement d'incidents survenus pendant les missions.",
-    icon: "warning",
-  },
-  {
-    id: "5",
-    title: "Évaluation chauffeur",
-    description: "Formulaire d'évaluation des performances des chauffeurs.",
-    icon: "person",
-  },
-];
-
 export default function FormListScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const router = useRouter();
+
+  const {
+    data: forms = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["forms", page, limit],
+    queryFn: () => apiService.queryForms(limit, page),
+  });
+
+  const formItems: FormItem[] = (forms as any[]).map((form: any) => ({
+    id: form._id || form.id,
+    title: form.name || form.title || "Formulaire",
+    description: form.description || "Description non disponible",
+    icon: "document" as keyof typeof Ionicons.glyphMap,
+  }));
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -126,13 +112,29 @@ export default function FormListScreen() {
         </View>
       )}
       <Text style={styles.pageTitle}>Liste des formulaires</Text>
-      <FlatList
-        data={formItems}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#5D866C" />
+          <Text style={styles.loadingText}>Chargement des formulaires...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            Erreur lors du chargement des formulaires
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => {}}>
+            <Text style={styles.retryText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={formItems}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       <Modal
         visible={showLogoutModal}
@@ -283,5 +285,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#ff4757",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: "#5D866C",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

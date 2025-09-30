@@ -44,8 +44,10 @@ import { Asset, Driver, Bac, Location, User } from "@/types/api";
 export default function FormScreen() {
   const insets = useSafeAreaInsets();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showLocationAlert, setShowLocationAlert] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -193,7 +195,7 @@ export default function FormScreen() {
       updateLocation(location);
       console.log("Location obtained:", location);
       setIsGettingLocation(false);
-      setShowSuccessModal(true);
+      setShowConfirmationModal(true);
     } else {
       // Impossible d'obtenir la géolocalisation
       console.log("Failed to obtain location");
@@ -205,6 +207,34 @@ export default function FormScreen() {
   const handleModalClose = () => {
     setShowSuccessModal(false);
     resetForm();
+  };
+
+  const handleConfirmSave = async () => {
+    setIsSaving(true);
+    try {
+      const dataToSave = {
+        asset: formData.selectedAsset?.id,
+        driver: formData.selectedDriver?.id,
+        bac: formData.selectedBac?.id,
+        photo: formData.photo,
+        description: formData.description,
+        location: formData.location,
+        date: formData.date,
+        user: user?._id,
+      };
+      await apiService.saveFormData(dataToSave);
+      setShowConfirmationModal(false);
+      setShowSuccessModal(true); // Show success after saving
+    } catch (error) {
+      console.error("Error saving form:", error);
+      Alert.alert("Erreur", "Échec de la sauvegarde du formulaire");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirmationModal(false);
   };
 
   const handleLogout = async () => {
@@ -359,7 +389,8 @@ export default function FormScreen() {
                   !formData.selectedDriver ||
                   !formData.selectedBac ||
                   !formData.description ||
-                  isGettingLocation) &&
+                  isGettingLocation ||
+                  isSaving) &&
                   styles.submitButtonDisabled,
               ]}
               onPress={handleSubmit}
@@ -368,7 +399,8 @@ export default function FormScreen() {
                 !formData.selectedDriver ||
                 !formData.selectedBac ||
                 !formData.description ||
-                isGettingLocation
+                isGettingLocation ||
+                isSaving
               }
             >
               <LinearGradient
@@ -391,6 +423,8 @@ export default function FormScreen() {
                 <Text style={styles.submitButtonText}>
                   {isGettingLocation
                     ? "Géolocalisation..."
+                    : isSaving
+                    ? "Sauvegarde..."
                     : "Valider le formulaire"}
                 </Text>
               </LinearGradient>
@@ -413,7 +447,7 @@ export default function FormScreen() {
           <View style={styles.successModal}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {isFormValid() ? "Formulaire soumis" : "Erreur"}
+                {isFormValid() ? "Formulaire soumis avec succès" : "Erreur"}
               </Text>
               <TouchableOpacity
                 onPress={handleModalClose}
@@ -431,48 +465,8 @@ export default function FormScreen() {
                     style={styles.modalIcon}
                   />
                   <Text style={styles.modalText}>
-                    Véhicule: {formData.selectedAsset?.name}
+                    Le formulaire a été sauvegardé avec succès.
                   </Text>
-                  <Text style={styles.modalText}>
-                    Chauffeur: {formData.selectedDriver?.name}
-                  </Text>
-                  <Text style={styles.modalText}>
-                    Bac: {formData.selectedBac?.name}
-                  </Text>
-                  {formData.photo && (
-                    <View style={styles.modalPhotoContainer}>
-                      <Camera size={16} color="#666" />
-                      <Text style={styles.modalPhotoText}>Photo ajoutée</Text>
-                    </View>
-                  )}
-                  {formData.description && (
-                    <View style={styles.modalDescriptionContainer}>
-                      <FileText size={16} color="#666" />
-                      <Text
-                        style={styles.modalDescriptionText}
-                        numberOfLines={2}
-                      >
-                        {formData.description}
-                      </Text>
-                    </View>
-                  )}
-                  {formData.location && (
-                    <View style={styles.modalLocationContainer}>
-                      <MapPin size={16} color="#666" />
-                      <Text style={styles.modalLocationText}>
-                        Position: {formData.location.latitude.toFixed(6)},{" "}
-                        {formData.location.longitude.toFixed(6)}
-                      </Text>
-                      {formData.location.address && (
-                        <Text
-                          style={styles.modalLocationAddress}
-                          numberOfLines={1}
-                        >
-                          {formData.location.address}
-                        </Text>
-                      )}
-                    </View>
-                  )}
                 </>
               ) : (
                 <Text style={styles.modalErrorText}>
@@ -480,6 +474,89 @@ export default function FormScreen() {
                   chauffeur, bac, description et géolocalisation).
                 </Text>
               )}
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showConfirmationModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelConfirm}
+      >
+        <Pressable style={styles.modalOverlay} onPress={handleCancelConfirm}>
+          <View style={styles.confirmationModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Confirmer la soumission</Text>
+              <TouchableOpacity
+                onPress={handleCancelConfirm}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>
+                Véhicule: {formData.selectedAsset?.name}
+              </Text>
+              <Text style={styles.modalText}>
+                Chauffeur: {formData.selectedDriver?.name}
+              </Text>
+              <Text style={styles.modalText}>
+                Bac: {formData.selectedBac?.name}
+              </Text>
+              {formData.photo && (
+                <View style={styles.modalPhotoContainer}>
+                  <Camera size={16} color="#666" />
+                  <Text style={styles.modalPhotoText}>Photo ajoutée</Text>
+                </View>
+              )}
+              {formData.description && (
+                <View style={styles.modalDescriptionContainer}>
+                  <FileText size={16} color="#666" />
+                  <Text style={styles.modalDescriptionText} numberOfLines={2}>
+                    {formData.description}
+                  </Text>
+                </View>
+              )}
+              {formData.location && (
+                <View style={styles.modalLocationContainer}>
+                  <MapPin size={16} color="#666" />
+                  <Text style={styles.modalLocationText}>
+                    Position: {formData.location.latitude.toFixed(6)},{" "}
+                    {formData.location.longitude.toFixed(6)}
+                  </Text>
+                  {formData.location.address && (
+                    <Text style={styles.modalLocationAddress} numberOfLines={1}>
+                      {formData.location.address}
+                    </Text>
+                  )}
+                </View>
+              )}
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelConfirm}
+                  disabled={isSaving}
+                >
+                  <Text style={styles.cancelButtonText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.confirmButton,
+                    isSaving && styles.confirmButtonDisabled,
+                  ]}
+                  onPress={handleConfirmSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <ActivityIndicator size={20} color="#fff" />
+                  ) : (
+                    <Text style={styles.confirmButtonText}>Confirmer</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Pressable>
@@ -916,5 +993,49 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     color: "#333",
+  },
+  confirmationModal: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#6c757d",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: "#5D866C",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  confirmButtonDisabled: {
+    backgroundColor: "#a89078",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
