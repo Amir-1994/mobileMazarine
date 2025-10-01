@@ -53,6 +53,7 @@ export const apiService = {
       if (!response.ok) {
         throw new Error("Login failed");
       }
+   
       const data: LoginResponse = await response.json();
       console.log("Login response data:", data);
       if (data.success) {
@@ -64,7 +65,7 @@ export const apiService = {
       throw error;
     }
   },
-
+/*
   async logout(request: LogoutRequest): Promise<LogoutResponse> {
     try {
       const authData = await getAuthData();
@@ -87,6 +88,14 @@ export const apiService = {
         await removeAuthData();
       }
       return data;
+    } catch (error) {
+      console.error("Error during logout:", error);
+      throw error;
+    }
+  },*/
+    async logout(request: LogoutRequest): Promise<any> {
+    try {
+        await removeAuthData();
     } catch (error) {
       console.error("Error during logout:", error);
       throw error;

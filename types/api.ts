@@ -54,6 +54,7 @@ export interface LoginResponse {
   result: {
     user: User;
     token: string;
+    tokenId:string;
   };
 }
 

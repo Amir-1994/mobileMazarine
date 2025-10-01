@@ -37,7 +37,7 @@ export default function LoginForm() {
   const [loggedUsers, setLoggedUsers] = useState<
     { user: User; password: string }[]
   >([]);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnected, setIsConnected] = useState<boolean>(true);
 
   useEffect(() => {
     const loadLoggedUsers = async () => {
@@ -54,8 +54,15 @@ export default function LoginForm() {
   }, []);
 
   useEffect(() => {
-    checkConnection();
-  }, [isConnected]);
+       const unsubscribe = NetInfo.addEventListener(state => {
+
+      setIsConnected(state.isConnected|| false);
+    });
+
+    // Cleanup
+    return () => unsubscribe();
+  }, []);
+  /*
   const checkConnection = async () => {
     try {
       const state = await NetInfo.fetch();
@@ -65,12 +72,12 @@ export default function LoginForm() {
       console.error("Error fetching network state:", error);
       setIsConnected(false);
     }
-  };
+  };*/
   const handleLogin = async () => {
     try {
       const credentials: LoginRequest = { login: username, password };
-      await checkConnection();
-      console.log("isConnected", isConnected);
+     // await checkConnection();
+  
 
       if (isConnected) {
         if (!username || !password) {

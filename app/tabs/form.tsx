@@ -60,7 +60,6 @@ export default function FormScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
   const { title, description, id } = useLocalSearchParams();
-  const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
   const {
     formData,
@@ -89,15 +88,16 @@ export default function FormScreen() {
     checkAuth();
   }, [router]);
 
-  const checkConnection = async () => {
-    try {
-      const state = await NetInfo.fetch();
-      setIsConnected(state.isConnected ?? false);
-    } catch (error) {
-      console.error("Error fetching network state:", error);
-      setIsConnected(false);
-    }
-  };
+  const [isConnected, setIsConnected] = useState<boolean>(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected || false);
+    });
+
+    // Cleanup
+    return () => unsubscribe();
+  }, []);
 
   const fetchAssets = async (term: string) => {
     return await apiService.queryAssets(term);
@@ -308,8 +308,6 @@ export default function FormScreen() {
       };
 
       // Check internet connection
-
-      await checkConnection();
 
       if (isConnected) {
         // Save to server

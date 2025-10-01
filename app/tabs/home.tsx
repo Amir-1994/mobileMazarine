@@ -181,7 +181,7 @@ export default function FormListScreen() {
               onPress={handleLogout}
             >
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-                Déconnexion
+                {t("LOGOUT")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -192,7 +192,7 @@ export default function FormListScreen() {
               }}
               onPress={() => setShowLogoutModal(false)}
             >
-              <Text style={{ color: "#666", fontSize: 16 }}>Annuler</Text>
+              <Text style={{ color: "#666", fontSize: 16 }}>{t("CANCEL")}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
