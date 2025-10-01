@@ -1,9 +1,11 @@
+import { FormData } from "@/types/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState, useEffect } from "react";
 
 export interface OfflineForm {
   id: string;
-  data: any;
+  title?: string;
+  data: FormData;
   timestamp: number;
 }
 
@@ -19,7 +21,9 @@ export const useOfflineForms = () => {
       if (stored) {
         const forms = JSON.parse(stored);
         setOfflineForms(forms);
-        setOfflineFormsCount(forms.length);
+        let legnthForms = forms.length;
+        legnthForms++;
+        setOfflineFormsCount(legnthForms);
       }
     } catch (error) {
       console.error("Error loading offline forms:", error);
@@ -30,10 +34,11 @@ export const useOfflineForms = () => {
     try {
       const newForm: OfflineForm = {
         id: Date.now().toString(),
+        title: formData.title,
+
         data: formData,
         timestamp: Date.now(),
       };
-
       const updatedForms = [...offlineForms, newForm];
       await AsyncStorage.setItem(
         OFFLINE_FORMS_KEY,

@@ -2,9 +2,21 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View } from "react-native";
 import { useOfflineForms } from "@/hooks/useOfflineForms";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
-  const { offlineFormsCount } = useOfflineForms();
+  const { t } = useTranslation();
+
+  let { offlineFormsCount } = useOfflineForms();
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      console.log("Offline Forms Count:", offlineFormsCount);
+    }, 500);
+
+    return () => clearInterval(intervalId);
+  }, [offlineFormsCount]);
 
   return (
     <Tabs
@@ -33,7 +45,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: t("HOME"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" color={color} size={size} />
           ),
@@ -42,7 +54,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="offline-forms"
         options={{
-          title: "Offline",
+          title: t("OFFLINE_FORMS"),
           tabBarIcon: ({ color, size }) => (
             <View>
               <Ionicons name="notifications" color={color} size={size} />
@@ -77,7 +89,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: t("SETTINGS"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" color={color} size={size} />
           ),

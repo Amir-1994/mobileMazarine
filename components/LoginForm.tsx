@@ -17,8 +17,13 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiService } from "../services/api";
 import { LoginRequest, User } from "../types/api";
-
+import { checkInternetConnection } from "@/utils/network";
+import NetInfo from "@react-native-community/netinfo";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import i18n from "../utils/i18n";
 export default function LoginForm() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,12 +32,12 @@ export default function LoginForm() {
   const [serverUrl, setServerUrl] = useState("");
   const router = useRouter();
 
-  const [language, setLanguage] = useState("en");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [loggedUsers, setLoggedUsers] = useState<
     { user: User; password: string }[]
   >([]);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
     const loadLoggedUsers = async () => {
@@ -48,31 +53,50 @@ export default function LoginForm() {
     loadLoggedUsers();
   }, []);
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
+  useEffect(() => {
+    checkConnection();
+  }, [isConnected]);
+  const checkConnection = async () => {
+    try {
+      const state = await NetInfo.fetch();
+      console.log("Connection type", state);
+      setIsConnected(state.isConnected || false);
+    } catch (error) {
+      console.error("Error fetching network state:", error);
+      setIsConnected(false);
     }
-
-    setLoading(true);
+  };
+  const handleLogin = async () => {
     try {
       const credentials: LoginRequest = { login: username, password };
-      const response = await apiService.login(credentials);
-      if (response.success) {
-        const user = response.result.user;
-        const userExists = loggedUsers.some((u) => u.user._id === user._id);
-        if (!userExists) {
-          const updatedUsers = [...loggedUsers, { user, password }];
-          setLoggedUsers(updatedUsers);
-          AsyncStorage.setItem("loggedUsers", JSON.stringify(updatedUsers));
+      await checkConnection();
+      console.log("isConnected", isConnected);
+
+      if (isConnected) {
+        if (!username || !password) {
+          Alert.alert(t("error"), t("pleaseFillAllFields"));
+          return;
         }
-        router.push("/tabs/home" as any);
+        setLoading(true);
+        const response = await apiService.login(credentials);
+        if (response.success) {
+          const user = response.result.user;
+          const userExists = loggedUsers.some((u) => u.user._id === user._id);
+          if (!userExists) {
+            const updatedUsers = [...loggedUsers, { user, password }];
+            setLoggedUsers(updatedUsers);
+            AsyncStorage.setItem("loggedUsers", JSON.stringify(updatedUsers));
+          }
+          router.push("/tabs/home" as any);
+        } else {
+          Alert.alert(t("error"), t("loginFailed"));
+        }
       } else {
-        Alert.alert("Error", "Login failed");
+        Alert.alert(t("error"), t("noInternetConnection"));
       }
     } catch (error) {
       console.error("Login error:", error);
-      Alert.alert("Error", "Login failed. Please try again.");
+      Alert.alert(t("error"), t("loginFailedTryAgain"));
     } finally {
       setLoading(false);
     }
@@ -93,8 +117,8 @@ export default function LoginForm() {
           source={require("../assets/images/adaptive-icon.png")}
           style={styles.logo}
         />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+        <Text style={styles.title}>{t("welcomeBack")}</Text>
+        <Text style={styles.subtitle}>{t("signInToAccount")}</Text>
       </View>
 
       <View style={styles.form}>
@@ -108,7 +132,7 @@ export default function LoginForm() {
                 ? `${selectedUser.first_name || selectedUser.login} ${
                     selectedUser.last_name || ""
                   }`.trim()
-                : "Select User"}
+                : t("selectUser")}
             </Text>
             <Ionicons name="chevron-down" size={20} color="#333" />
           </TouchableOpacity>
@@ -117,7 +141,7 @@ export default function LoginForm() {
           style={styles.input}
           value={username}
           onChangeText={setUsername}
-          placeholder="Username"
+          placeholder={t("username")}
           autoCapitalize="none"
           editable={!loading}
         />
@@ -126,7 +150,7 @@ export default function LoginForm() {
           style={styles.input}
           value={password}
           onChangeText={setPassword}
-          placeholder="Password"
+          placeholder={t("password")}
           secureTextEntry
           editable={!loading}
           onSubmitEditing={handleLogin}
@@ -134,14 +158,14 @@ export default function LoginForm() {
 
         <View style={styles.flagsContainer}>
           <TouchableOpacity
-            style={[styles.flag, language === "fr" && styles.flagSelected]}
-            onPress={() => setLanguage("fr")}
+            style={[styles.flag, i18n.language === "fr" && styles.flagSelected]}
+            onPress={() => i18n.changeLanguage("fr")}
           >
             <Text style={styles.flagText}>🇫🇷</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.flag, language === "en" && styles.flagSelected]}
-            onPress={() => setLanguage("en")}
+            style={[styles.flag, i18n.language === "en" && styles.flagSelected]}
+            onPress={() => i18n.changeLanguage("en")}
           >
             <Text style={styles.flagText}>🇬🇧</Text>
           </TouchableOpacity>
@@ -155,7 +179,7 @@ export default function LoginForm() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>{t("signIn")}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -171,19 +195,19 @@ export default function LoginForm() {
           onPress={() => setShowServerModal(false)}
         >
           <Pressable style={styles.serverModal} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Paramètres serveur</Text>
+            <Text style={styles.modalTitle}>{t("serverSettings")}</Text>
             <TextInput
               style={styles.modalInput}
               value={serverLabel}
               onChangeText={setServerLabel}
-              placeholder="Label"
+              placeholder={t("label")}
               placeholderTextColor="#999"
             />
             <TextInput
               style={styles.modalInput}
               value={serverUrl}
               onChangeText={setServerUrl}
-              placeholder="URL"
+              placeholder={t("url")}
               placeholderTextColor="#999"
             />
             <View style={styles.modalButtons}>
@@ -191,17 +215,17 @@ export default function LoginForm() {
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setShowServerModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Annuler</Text>
+                <Text style={styles.cancelButtonText}>{t("cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
                   // Save server settings
-                  Alert.alert("Succès", "Paramètres serveur sauvegardés");
+                  Alert.alert(t("success"), t("serverSettingsSaved"));
                   setShowServerModal(false);
                 }}
               >
-                <Text style={styles.modalButtonText}>Valider</Text>
+                <Text style={styles.modalButtonText}>{t("validate")}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -251,7 +275,9 @@ export default function LoginForm() {
                   </TouchableOpacity>
                 ))
             ) : (
-              <Text style={styles.bottomSheetItemText}>No logged in users</Text>
+              <Text style={styles.bottomSheetItemText}>
+                {t("noLoggedInUsers")}
+              </Text>
             )}
           </View>
         </Pressable>

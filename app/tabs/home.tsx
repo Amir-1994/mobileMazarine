@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuthData, removeAuthData, apiService } from "@/services/api";
 import { User } from "@/types/api";
-
+import { useTranslation } from "react-i18next";
 interface FormItem {
   id: string;
   title: string;
@@ -24,6 +24,8 @@ interface FormItem {
 }
 
 export default function FormListScreen() {
+  const { t } = useTranslation();
+
   const [user, setUser] = useState<User | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
@@ -90,8 +92,8 @@ export default function FormListScreen() {
           <Ionicons name={item.icon} size={32} color="#5D866C" />
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.description}>{item.description}</Text>
+          <Text style={styles.title}>{t(item.title)}</Text>
+          <Text style={styles.description}>{t(item.description)}</Text>
         </View>
         <Ionicons name="chevron-forward" size={24} color="#C2A68C" />
       </View>
@@ -113,7 +115,7 @@ export default function FormListScreen() {
           </View>
         </View>
       )}
-      <Text style={styles.pageTitle}>Liste des formulaires</Text>
+      <Text style={styles.pageTitle}>{t("form_list")}</Text>
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5D866C" />

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,12 +13,28 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOfflineForms, OfflineForm } from "@/hooks/useOfflineForms";
 import { apiService } from "@/services/api";
 import { checkInternetConnection } from "@/utils/network";
+import { TextArea } from "@/components/TextArea";
+import { useTranslation } from "react-i18next";
 
 export default function OfflineFormsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { offlineForms, deleteOfflineForm, clearOfflineForms } =
-    useOfflineForms();
+  const {
+    offlineForms,
+    deleteOfflineForm,
+    clearOfflineForms,
+    updateOfflineForm,
+  } = useOfflineForms();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedDescription, setEditedDescription] = useState<string>("");
+  const [getOfflineForms, setOfflineForms] = useState<any>([]);
+
+  const { t } = useTranslation();
+  useEffect(() => {
+    if (offlineForms.length > 0) {
+      setOfflineForms(offlineForms);
+    }
+  }, [offlineForms]);
 
   const handleDeleteForm = (id: string) => {
     Alert.alert(
@@ -70,33 +86,77 @@ export default function OfflineFormsScreen() {
     );
   };
 
-  const renderItem = ({ item }: { item: OfflineForm }) => (
+  const handleSave = () => {
+    if (editingId) {
+      const item = offlineForms.find((f) => f.id === editingId);
+      if (item) {
+        updateOfflineForm(editingId, {
+          ...item.data,
+          description: editedDescription,
+        });
+      }
+      setEditingId(null);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+  };
+
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.card}>
       <View style={styles.cardContent}>
         <View style={styles.formInfo}>
-          <Text style={styles.formTitle}>
-            Formulaire du {new Date(item.timestamp).toLocaleDateString()}
-          </Text>
-          <Text style={styles.formDescription}>
-            {item.data.description || "Aucune description"}
-          </Text>
+          <Text style={styles.formTitle}>{item.title || t("DELETE_ALL")}</Text>
+          {editingId === item.id ? (
+            <TextArea
+              value={editedDescription}
+              onChangeText={setEditedDescription}
+              placeholder="Entrez une description..."
+              numberOfLines={2}
+            />
+          ) : (
+            <Text style={styles.formDescription}>
+              {item.data?.data?.description || "Pas de description"}
+            </Text>
+          )}
           <Text style={styles.formTimestamp}>
-            Créé le {new Date(item.timestamp).toLocaleString()}
+            Créé le {new Date(item.data?.data?.date).toLocaleString()}
           </Text>
         </View>
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.syncButton]}
-            onPress={() => handleSyncForm(item)}
-          >
-            <Ionicons name="checkmark-circle" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={() => handleDeleteForm(item.id)}
-          >
-            <Ionicons name="trash" size={24} color="#fff" />
-          </TouchableOpacity>
+          {editingId === item.id ? (
+            <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.saveButton]}
+                onPress={handleSave}
+              >
+                <Ionicons name="checkmark" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={handleCancel}
+              >
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.syncButton]}
+                onPress={() => handleSyncForm(item)}
+              >
+                <Ionicons name="checkmark-circle" size={24} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.deleteButton]}
+                onPress={() => handleDeleteForm(item.id)}
+              >
+                <Ionicons name="trash" size={24} color="#fff" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -243,6 +303,15 @@ const styles = StyleSheet.create({
   },
   syncButton: {
     backgroundColor: "#4CAF50",
+  },
+  editButton: {
+    backgroundColor: "#2196F3",
+  },
+  saveButton: {
+    backgroundColor: "#4CAF50",
+  },
+  cancelButton: {
+    backgroundColor: "#FF9800",
   },
   deleteButton: {
     backgroundColor: "#f44336",

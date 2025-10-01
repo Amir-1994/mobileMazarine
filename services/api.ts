@@ -329,6 +329,11 @@ export const apiService = {
   },
 
   async saveFormData(formData: any): Promise<any> {
+    console.log("Saving form data to API...", formData);
+    if ("title" in formData) {
+      delete formData.title;
+    }
+    console.log("after delete title", formData);
     const authData = await getAuthData();
 
     if (!authData) {

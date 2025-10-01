@@ -38,11 +38,17 @@ import { PhotoPicker } from "@/components/PhotoPicker";
 import { TextArea } from "@/components/TextArea";
 import { LocationPicker } from "@/components/LocationPicker";
 import { useFormStore } from "@/hooks/useFormStore";
+import { useOfflineForms } from "@/hooks/useOfflineForms";
 import { apiService, getAuthData, removeAuthData } from "@/services/api";
+import { checkInternetConnection } from "@/utils/network";
 import { Asset, Driver, Bac, Location, User } from "@/types/api";
 import { useLocalSearchParams, useGlobalSearchParams, Link } from "expo-router";
+import NetInfo from "@react-native-community/netinfo";
+import { useTranslation } from "react-i18next";
 
 export default function FormScreen() {
+  const { t } = useTranslation();
+
   const insets = useSafeAreaInsets();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -54,6 +60,7 @@ export default function FormScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
   const { title, description, id } = useLocalSearchParams();
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
   const {
     formData,
@@ -68,6 +75,8 @@ export default function FormScreen() {
     isFormValid,
   } = useFormStore();
 
+  const { saveOfflineForm } = useOfflineForms();
+
   useEffect(() => {
     const checkAuth = async () => {
       const auth = await getAuthData();
@@ -79,6 +88,16 @@ export default function FormScreen() {
     };
     checkAuth();
   }, [router]);
+
+  const checkConnection = async () => {
+    try {
+      const state = await NetInfo.fetch();
+      setIsConnected(state.isConnected ?? false);
+    } catch (error) {
+      console.error("Error fetching network state:", error);
+      setIsConnected(false);
+    }
+  };
 
   const fetchAssets = async (term: string) => {
     return await apiService.queryAssets(term);
@@ -215,7 +234,7 @@ export default function FormScreen() {
   const handleConfirmSave = async () => {
     setIsSaving(true);
     try {
-      const dataToSave = {
+      let dataToSave = {
         _form_id: id,
         READ_ONLY: false,
         data: {
@@ -250,12 +269,71 @@ export default function FormScreen() {
         _company_owner: user?._company_owner?._id || user?._company_owner,
         user: user?._id,
       };
-      await apiService.saveFormData(dataToSave);
-      setShowConfirmationModal(false);
-      setShowSuccessModal(true); // Show success after saving
+      console.log("title is ", title);
+      let offlineToSave = {
+        title: title,
+        _form_id: id,
+        READ_ONLY: false,
+        data: {
+          description: formData.description,
+          photo: {
+            photo: formData.photo,
+          },
+          asset: {
+            name: formData.selectedAsset?.name,
+            _id: formData.selectedAsset?.id,
+            //brand : formData.selectedAsset?.brand,
+          },
+          driver: {
+            first_name: formData.selectedDriver?.firstName,
+            last_name: formData.selectedDriver?.lastName,
+            _id: formData.selectedDriver?.id,
+          },
+          bac: {
+            name: formData.selectedBac?.name || "",
+
+            _id: formData.selectedBac?.id,
+          },
+          loc: {
+            type: "Point",
+            coordinates: [
+              formData.location?.longitude || 0,
+              formData.location?.latitude || 0,
+            ],
+          },
+          date: formData.date,
+        },
+        _company_owner: user?._company_owner?._id || user?._company_owner,
+        user: user?._id,
+      };
+
+      // Check internet connection
+
+      await checkConnection();
+
+      if (isConnected) {
+        // Save to server
+        await apiService.saveFormData(dataToSave);
+        setShowConfirmationModal(false);
+        setShowSuccessModal(true); // Show success after saving
+      } else {
+        console.log("will save it offline");
+        // Save offline
+        await saveOfflineForm(offlineToSave);
+        setShowConfirmationModal(false);
+        Alert.alert(t("SAVE_OFFLINE"), t("LOCAL_SAVE"), [
+          {
+            text: "OK",
+            onPress: () => {
+              resetForm();
+              router.back();
+            },
+          },
+        ]);
+      }
     } catch (error) {
-      console.error("Error saving form:", error);
-      Alert.alert("Erreur", "Échec de la sauvegarde du formulaire");
+      console.error(t("FORM_SAVIN_ERROR"), error);
+      Alert.alert(t("Erreur"), t("FORM_SAVIN_ERROR"));
     } finally {
       setIsSaving(false);
     }
@@ -271,8 +349,8 @@ export default function FormScreen() {
       try {
         await apiService.logout({ id: user._id });
       } catch (error) {
-        console.error("Logout error:", error);
-        Alert.alert("Error", "Logout failed");
+        console.error(t("LOGOUT_ERROR"), error);
+        Alert.alert(t("LOGOUT_ERROR"), t("LOGOUT_FAILED"));
       }
       await removeAuthData();
       router.replace("/");
@@ -343,60 +421,60 @@ export default function FormScreen() {
           </View>
         </View>
       )}
-      <Text style={styles.pageTitle}>{title}</Text>
+      <Text style={styles.pageTitle}>{t(title)}</Text>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
-          <FormField label="Véhicule" required>
+          <FormField label={t("ASSET")} key={formData.selectedAsset?.id}>
             <AutocompleteSelect<Asset>
               fetchData={fetchAssets}
               value={formData.selectedAsset}
               onSelect={updateAsset}
-              placeholder="Sélectionner un véhicule"
+              placeholder={t("SELECT_ASSET")}
               displayKey="name"
               renderItem={renderAssetItem}
             />
           </FormField>
 
-          <FormField label="Chauffeur" required>
+          <FormField key={formData.selectedDriver?.id} label={t("DRIVER")}>
             <AutocompleteSelect<Driver>
               fetchData={fetchDrivers}
               value={formData.selectedDriver}
               onSelect={updateDriver}
-              placeholder="Sélectionner un chauffeur"
+              placeholder={t("SELECT_DRIVER")}
               displayKey="firstName"
               renderItem={renderDriverItem}
             />
           </FormField>
 
-          <FormField label="Bac" required>
+          <FormField label={t("BIN")} key={formData.selectedBac?.id}>
             <AutocompleteSelect<Bac>
               fetchData={fetchBacs}
               value={formData.selectedBac}
               onSelect={updateBac}
-              placeholder="Sélectionner un bac"
+              placeholder={t("SELECT_BAC")}
               displayKey="name"
               renderItem={renderBacItem}
             />
           </FormField>
 
-          <FormField label="Photo">
+          <FormField label={t("PHOTO")}>
             <PhotoPicker
               value={formData.photo}
               onSelect={updatePhoto}
-              placeholder="Ajouter une photo de la mission"
+              placeholder={t("ADD_MISSION_PHOTO")}
             />
           </FormField>
 
-          <FormField label="Description" required>
+          <FormField label={t("DESCRIPTION")}>
             <TextArea
               value={formData.description}
               onChangeText={updateDescription}
-              placeholder="Décrivez la mission, les détails importants..."
+              placeholder={t("MISSION_DETAILS_DESCRIPTION")}
               maxLength={500}
             />
           </FormField>
 
-          <FormField label="Date et heure">
+          <FormField label={t("DATE")} required>
             <TouchableOpacity
               style={styles.dateInput}
               onPress={() => setShowDatePicker(true)}
@@ -423,21 +501,18 @@ export default function FormScreen() {
               ]}
               onPress={handleSubmit}
               disabled={
-                !formData.selectedAsset ||
-                !formData.selectedDriver ||
-                !formData.selectedBac ||
-                !formData.description ||
-                isGettingLocation ||
-                isSaving
+                // !formData.selectedAsset ||
+                //!formData.selectedDriver ||
+                // !formData.selectedBac ||
+                !formData.photo || !formData.date
+                // !formData.description ||
+                //  isGettingLocation ||
+                //isSaving
               }
             >
               <LinearGradient
                 colors={
-                  formData.selectedAsset &&
-                  formData.selectedDriver &&
-                  formData.selectedBac &&
-                  formData.description &&
-                  !isGettingLocation
+                  formData.photo && formData.date && !isGettingLocation
                     ? ["#5D866C", "#4a6b58"]
                     : ["#C2A68C", "#a89078"]
                 }
@@ -450,16 +525,16 @@ export default function FormScreen() {
                 )}
                 <Text style={styles.submitButtonText}>
                   {isGettingLocation
-                    ? "Géolocalisation..."
+                    ? t("GEO")
                     : isSaving
-                    ? "Sauvegarde..."
-                    : "Valider le formulaire"}
+                    ? t("SAVING")
+                    : t("VALIDATE_FORM")}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.resetButton} onPress={resetForm}>
-              <Text style={styles.resetButtonText}>Réinitialiser</Text>
+              <Text style={styles.resetButtonText}>{t("RESET")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -475,7 +550,7 @@ export default function FormScreen() {
           <View style={styles.successModal}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {isFormValid() ? "Formulaire soumis avec succès" : "Erreur"}
+                {isFormValid() ? t("FORM_SUBMITTED_SUCCESSFULLY") : t("ERROR")}
               </Text>
               <TouchableOpacity
                 onPress={handleModalClose}
