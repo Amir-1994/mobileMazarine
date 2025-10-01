@@ -37,53 +37,42 @@ export default function OfflineFormsScreen() {
   }, [offlineForms]);
 
   const handleDeleteForm = (id: string) => {
-    Alert.alert(
-      "Supprimer le formulaire",
-      "Êtes-vous sûr de vouloir supprimer ce formulaire hors ligne ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: () => deleteOfflineForm(id),
-        },
-      ]
-    );
+    Alert.alert(t("DELETE_FORM"), t("FORM_DELETE_CONFIRMATION"), [
+      { text: t("CANCEL"), style: "cancel" },
+      {
+        text: t("DELETE"),
+        style: "destructive",
+        onPress: () => deleteOfflineForm(id),
+      },
+    ]);
   };
 
   const handleSyncForm = async (form: OfflineForm) => {
     const isConnected = await checkInternetConnection();
     if (!isConnected) {
-      Alert.alert(
-        "Erreur",
-        "Aucune connexion internet disponible. Veuillez vérifier votre connexion et réessayer."
-      );
+      Alert.alert(t("ERROR"), t("NO_CONNECTION"));
       return;
     }
 
     try {
       await apiService.saveFormData(form.data);
       deleteOfflineForm(form.id);
-      Alert.alert("Succès", "Formulaire synchronisé avec succès");
+      Alert.alert(t("SUCCESS"), t("SUCCESS_SYNC"));
     } catch (error) {
       console.error("Error syncing form:", error);
-      Alert.alert("Erreur", "Échec de la synchronisation. Veuillez réessayer.");
+      Alert.alert(t("ERROR"), t("FAILED_SYNC"));
     }
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      "Effacer tout",
-      "Êtes-vous sûr de vouloir supprimer tous les formulaires hors ligne ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Effacer tout",
-          style: "destructive",
-          onPress: clearOfflineForms,
-        },
-      ]
-    );
+    Alert.alert(t("DELETE_ALL"), t("DELETE_CONFIRMATION"), [
+      { text: t("CANCEL"), style: "cancel" },
+      {
+        text: t("DELETE_ALL"),
+        style: "destructive",
+        onPress: clearOfflineForms,
+      },
+    ]);
   };
 
   const handleSave = () => {
@@ -107,7 +96,9 @@ export default function OfflineFormsScreen() {
     <View style={styles.card}>
       <View style={styles.cardContent}>
         <View style={styles.formInfo}>
-          <Text style={styles.formTitle}>{item.title || t("DELETE_ALL")}</Text>
+          <Text style={styles.formTitle}>
+            {t(item.title) || t("DELETE_ALL")}
+          </Text>
           {editingId === item.id ? (
             <TextArea
               value={editedDescription}
@@ -117,11 +108,11 @@ export default function OfflineFormsScreen() {
             />
           ) : (
             <Text style={styles.formDescription}>
-              {item.data?.data?.description || "Pas de description"}
+              {item.data?.data?.description || t("NO_DESCRIPTION")}
             </Text>
           )}
           <Text style={styles.formTimestamp}>
-            Créé le {new Date(item.data?.data?.date).toLocaleString()}
+            {t("Created_at")} {new Date(item.data?.data?.date).toLocaleString()}
           </Text>
         </View>
         <View style={styles.actions}>
@@ -171,10 +162,10 @@ export default function OfflineFormsScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Formulaires hors ligne</Text>
+        <Text style={styles.headerTitle}>{t("OFFLINE_FORMS")}</Text>
         {offlineForms.length > 0 && (
           <TouchableOpacity style={styles.clearButton} onPress={handleClearAll}>
-            <Text style={styles.clearButtonText}>Effacer tout</Text>
+            <Text style={styles.clearButtonText}>{t("DELETE_ALL")}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -182,10 +173,10 @@ export default function OfflineFormsScreen() {
       {offlineForms.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="cloud-offline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>Aucun formulaire hors ligne</Text>
-          <Text style={styles.emptySubtext}>
-            Les formulaires sauvegardés hors ligne apparaîtront ici
+          <Text style={styles.emptyText}>
+            {t("AUCUN_FORMULAIRE_HORS_LIGNE")}
           </Text>
+          <Text style={styles.emptySubtext}>{t("FORM_APPARISION")}</Text>
         </View>
       ) : (
         <FlatList

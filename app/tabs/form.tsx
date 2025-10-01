@@ -444,7 +444,7 @@ export default function FormScreen() {
             />
           </FormField>
 
-          <FormField label={t("BIN")} key={formData.selectedBac?.id}>
+          <FormField label={t("BAC")} key={formData.selectedBac?.id}>
             <AutocompleteSelect<Bac>
               fetchData={fetchBacs}
               value={formData.selectedBac}
@@ -566,13 +566,12 @@ export default function FormScreen() {
                     style={styles.modalIcon}
                   />
                   <Text style={styles.modalText}>
-                    Le formulaire a été sauvegardé avec succès.
+                    {t("SUCCESS_FORM_SAVED")}
                   </Text>
                 </>
               ) : (
                 <Text style={styles.modalErrorText}>
-                  Veuillez remplir tous les champs obligatoires (véhicule,
-                  chauffeur, bac, description et géolocalisation).
+                  {t("HAVE_TO_SAVE_APP_CREDENTIALS")}
                 </Text>
               )}
             </View>
@@ -589,7 +588,7 @@ export default function FormScreen() {
         <Pressable style={styles.modalOverlay} onPress={handleCancelConfirm}>
           <View style={styles.confirmationModal}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Confirmer la soumission</Text>
+              <Text style={styles.modalTitle}>{t("CONFIRM_SOUMISSION")}</Text>
               <TouchableOpacity
                 onPress={handleCancelConfirm}
                 style={styles.modalCloseButton}
@@ -599,13 +598,13 @@ export default function FormScreen() {
             </View>
             <View style={styles.modalContent}>
               <Text style={styles.modalText}>
-                Véhicule: {formData.selectedAsset?.name}
+                {t("ASSET")}: {formData.selectedAsset?.name}
               </Text>
               <Text style={styles.modalText}>
-                Chauffeur: {formData.selectedDriver?.name}
+                {t("DRIVER")}: {formData.selectedDriver?.name}
               </Text>
               <Text style={styles.modalText}>
-                Bac: {formData.selectedBac?.name}
+                {t("BAC")}: {formData.selectedBac?.name}
               </Text>
               {formData.photo && (
                 <View style={styles.modalPhotoContainer}>
@@ -625,7 +624,7 @@ export default function FormScreen() {
                 <View style={styles.modalLocationContainer}>
                   <MapPin size={16} color="#666" />
                   <Text style={styles.modalLocationText}>
-                    Position: {formData.location.latitude.toFixed(6)},{" "}
+                    {t("POSITION")}: {formData.location.latitude.toFixed(6)},{" "}
                     {formData.location.longitude.toFixed(6)}
                   </Text>
                   {formData.location.address && (
@@ -641,7 +640,7 @@ export default function FormScreen() {
                   onPress={handleCancelConfirm}
                   disabled={isSaving}
                 >
-                  <Text style={styles.cancelButtonText}>Annuler</Text>
+                  <Text style={styles.cancelButtonText}>{t("CANCEL")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -654,7 +653,7 @@ export default function FormScreen() {
                   {isSaving ? (
                     <ActivityIndicator size={20} color="#fff" />
                   ) : (
-                    <Text style={styles.confirmButtonText}>Confirmer</Text>
+                    <Text style={styles.confirmButtonText}>{t("CONFIRM")}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -679,12 +678,11 @@ export default function FormScreen() {
               <View style={styles.alertIcon}>
                 <AlertTriangle size={24} color="#ff6b6b" />
               </View>
-              <Text style={styles.alertTitle}>Géolocalisation requise</Text>
+              <Text style={styles.alertTitle}>{t("GEO_REQUIRED")}</Text>
             </View>
             <View style={styles.alertContent}>
               <Text style={styles.alertText}>
-                Impossible dobtenir votre géolocalisation. Veuillez vérifier que
-                la géolocalisation est activée sur votre appareil et réessayer.
+                {t("LOCALISATION_GETTED_IMPOSSIBLE")}
               </Text>
             </View>
             <View style={styles.alertActions}>
