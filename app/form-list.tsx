@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuthData, removeAuthData, apiService } from "@/services/api";
 import { User } from "@/types/api";
+import { useTranslation } from "react-i18next";
 
 interface FormItem {
   id: string;
@@ -24,6 +25,8 @@ interface FormItem {
 }
 
 export default function FormListScreen() {
+  const { t } = useTranslation();
+
   const [user, setUser] = useState<User | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
@@ -156,7 +159,7 @@ export default function FormListScreen() {
                 marginBottom: 20,
               }}
             >
-              Se déconnecter
+              {t("LOGOUT")}
             </Text>
             <TouchableOpacity
               style={{

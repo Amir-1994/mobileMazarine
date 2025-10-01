@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { ChevronDown, Search, X } from "lucide-react-native";
+import { t } from "i18next";
 
 interface AutocompleteSelectProps<T> {
   data?: T[];
@@ -167,7 +168,7 @@ export function AutocompleteSelect<T extends { id: string }>({
               <Search size={20} color="#666" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Rechercher..."
+                placeholder={t("SEARCH")}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoFocus

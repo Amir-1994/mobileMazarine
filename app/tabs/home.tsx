@@ -168,7 +168,7 @@ export default function FormListScreen() {
                 marginBottom: 20,
               }}
             >
-              Se déconnecter
+              {t("LOGOUT")}
             </Text>
             <TouchableOpacity
               style={{

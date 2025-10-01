@@ -725,7 +725,7 @@ export default function FormScreen() {
                 marginBottom: 20,
               }}
             >
-              Se déconnecter
+              {t("LOGOUT")}
             </Text>
             <TouchableOpacity
               style={{
@@ -738,7 +738,7 @@ export default function FormScreen() {
               onPress={handleLogout}
             >
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-                Déconnexion
+                {t("LOGOUT")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -749,7 +749,7 @@ export default function FormScreen() {
               }}
               onPress={() => setShowLogoutModal(false)}
             >
-              <Text style={{ color: "#666", fontSize: 16 }}>Annuler</Text>
+              <Text style={{ color: "#666", fontSize: 16 }}>{t("CANCEL")}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>

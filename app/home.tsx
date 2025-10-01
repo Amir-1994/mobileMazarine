@@ -40,8 +40,11 @@ import { LocationPicker } from "@/components/LocationPicker";
 import { useFormStore } from "@/hooks/useFormStore";
 import { apiService, getAuthData, removeAuthData } from "@/services/api";
 import { Asset, Driver, Bac, Location, User } from "@/types/api";
+import { useTranslation } from "react-i18next";
 
 export default function FormScreen() {
+  const { t } = useTranslation();
+
   const insets = useSafeAreaInsets();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -627,7 +630,7 @@ export default function FormScreen() {
                 marginBottom: 20,
               }}
             >
-              Se déconnecter
+              {t("LOGOUT")}
             </Text>
             <TouchableOpacity
               style={{
