@@ -118,15 +118,13 @@ export default function FormListScreen() {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5D866C" />
-          <Text style={styles.loadingText}>Chargement des formulaires...</Text>
+          <Text style={styles.loadingText}>{t("LOADING")}</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Erreur lors du chargement des formulaires
-          </Text>
+          <Text style={styles.errorText}>{t("ERROR_FORM_LOADING_FORMS")}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => {}}>
-            <Text style={styles.retryText}>Réessayer</Text>
+            <Text style={styles.retryText}>{t("TRY_AGAIN")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -138,7 +136,7 @@ export default function FormListScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-
+      r
       <Modal
         visible={showLogoutModal}
         transparent
@@ -253,6 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 16,
+    marginTop: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

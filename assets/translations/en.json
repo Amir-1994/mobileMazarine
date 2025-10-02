@@ -88,5 +88,7 @@
   "HAVE_TO_SAVE_APP_CREDENTIALS": "Please fill in all required fields (asset, driver, bin, description, and geolocation).",
   "POSITION": "Position",
   "GEO_REQUIRED": "Geolocation required",
-  "LOCALISATION_GETTED_IMPOSSIBLE": "Unable to get your geolocation. Please check that geolocation is enabled on your device and try again."
+  "LOCALISATION_GETTED_IMPOSSIBLE": "Unable to get your geolocation. Please check that geolocation is enabled on your device and try again.",
+  "ERROR_FORM_LOADING_FORMS": "Error loading offline forms",
+  "TRY_AGAIN": "Try Again"
 }
