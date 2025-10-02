@@ -87,15 +87,6 @@ export default function TabLayout() {
           tabBarBadge: offlineFormsCount > 0 ? offlineFormsCount : undefined,
         }}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: t("SETTINGS"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" color={color} size={size} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }

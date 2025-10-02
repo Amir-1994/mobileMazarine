@@ -1,13 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot } from "expo-router";
 import "../utils/i18n";
+import { OfflineFormsProvider } from "@/contexts/OfflineFormsProvider";
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Slot />
+      <OfflineFormsProvider>
+        <Slot />
+      </OfflineFormsProvider>
     </QueryClientProvider>
   );
 }

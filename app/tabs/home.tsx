@@ -115,7 +115,6 @@ export default function FormListScreen() {
           </View>
         </View>
       )}
-      <Text style={styles.pageTitle}>{t("form_list")}</Text>
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5D866C" />

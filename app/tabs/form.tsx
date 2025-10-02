@@ -499,11 +499,11 @@ export default function FormScreen() {
               ]}
               onPress={handleSubmit}
               disabled={
-                // !formData.selectedAsset ||
-                //!formData.selectedDriver ||
-                // !formData.selectedBac ||
-                !formData.photo || !formData.date
-                // !formData.description ||
+                !formData.selectedAsset ||
+                !formData.selectedDriver ||
+                !formData.selectedBac ||
+                // !formData.photo || !formData.date
+                !formData.description
                 //  isGettingLocation ||
                 //isSaving
               }
